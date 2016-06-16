@@ -16,7 +16,7 @@ Metrics:
 
 
 Output Data:
-The code returns a time series of 3 vertices having highest number of triangles( see output folder), and average degree. Next to be included will be the size of the largest connected component. We can also make a change metric for detecting sudden changes in the metric
+The code returns a time series of 3 vertices having highest number of triangles( see output folder), and average degree. Next to be included will be the size of the largest connected component. We can also make a change metric for detecting sudden changes in the metric. These text data can be parsed by say, Python, and visualizations done using Matplotlib
 
  
 
