@@ -6,7 +6,7 @@ http://www.barabasilab.com/pubs/CCNR-ALB_Publications/200201-30_RevModernPhys-St
 
 In this experiment, we use Spark's GraphX libraries through Scala to evolve a network and compute a few metrics that capture the increase in interconnectivity. The metrics we'd like to measure are formation of cliques or triangles, and giant components. The more triangles go through any vertice, the more fully-connected the graph is. A fully connected graph will also have larger components, or, or one, two or a few super-communities (i.e., communities with their size being a large fraction of the total graph size).
 
-We we grow a small random network by continually adding edges to a fixed number of vertices. We take metrics at each time step. We can then detect where sudden or spikes in the metric occur. This will be a good indicator of the percolation point or stage
+We grow a small random network by continually adding edges to a fixed number of vertices. We take metrics at each time step. We can then detect where sudden or spikes in the metric occur. This will be a good indicator of the percolation point or stage
 
 Metrics: 
 
@@ -14,7 +14,7 @@ Number of triangles and Size of largest connected components metrics are coded
 
 1. Number of triangles: GraphX returns the number of triangles going through each vertex. We can rank the vertices according to the number of triangles they have and pick the first m as a metric. The total number of triangles these m vertices have can be a useful preliminary metric for the forming of giant components or super-communities. 
 
-2. Size of connected components: This can be the best metric for capturing formation of large communities or percolation. GraphX returns the connected component each vertix belongs to. We'd like to determine the component containing the highest number of vertices. 
+2. Size of connected components: This can be the best metric for capturing formation of large communities or percolation. GraphX returns the connected component each vertix belongs to. We determine the component containing the highest number of vertices by using the RDD actions and transformations of Spark 
 
 
 Output Data:
