@@ -8,15 +8,16 @@ In this experiment, we use Spark's GraphX libraries through Scala to evolve a ne
 
 We we grow a small random network by continually adding edges to a fixed number of vertices. We take metrics at each time step. We can then detect where sudden or spikes in the metric occur. This will be a good indicator of the percolation point or stage
 
-Metrics:
+Metrics: 
 
-1. Number of triangles: GraphX returns the number of triangles going through each vertex. We can rank the vertices according to the number of triangles they have and pick the first m as a metric. The total number of triangles these m vertices have can be a useful preliminary metric for the forming of giant components or super-communities. This is already part of the code.
+Number of triangles and Size of largest connected components metrics are coded
 
-2. Size of connected components: This can be the best metric for capturing formation of large communities or percolation. GraphX returns the connected component each vertix belongs to. We'd like to determine the component containing the highest number of vertices. This is not as yet part of the code yet but is in progress.
+1. Number of triangles: GraphX returns the number of triangles going through each vertex. We can rank the vertices according to the number of triangles they have and pick the first m as a metric. The total number of triangles these m vertices have can be a useful preliminary metric for the forming of giant components or super-communities. 
+
+2. Size of connected components: This can be the best metric for capturing formation of large communities or percolation. GraphX returns the connected component each vertix belongs to. We'd like to determine the component containing the highest number of vertices. 
 
 
 Output Data:
-The code returns a time series of 3 vertices having highest number of triangles( see output folder), and average degree. Next to be included will be the size of the largest connected component. We can also make a change metric for detecting sudden changes in the metric. These text data can be parsed by say, Python, and visualizations done using Matplotlib
-
+(See output folder - log.txt). The code returns a time series of 3 vertices having highest number of triangles(the number of triangles is the 2nd element of the pair), and average degree, and the size of the largest component (2nd element of pair). These text data can be parsed by say, Python, and visualizations done using Matplotlib
  
 

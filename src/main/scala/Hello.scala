@@ -1,12 +1,8 @@
-import java.io.{Externalizable, PrintWriter, Serializable}
-
+import java.io.PrintWriter
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
-
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import org.apache.spark.{SparkConf, SparkContext}
-
-import scala.collection.mutable
 import scala.util.Random
 
 
@@ -29,27 +25,12 @@ object Hello  {
     List(v1,v2)
   }
 
-
-  def findM(ccVertex: VertexRDD[VertexId], ccMap: mutable.HashMap[Long,Int] , writer: PrintWriter):  Int ={
-
-    def f(at: Int): Int ={at + 1}
-    var maxVal: Int = 0
-
-    ccVertex.foreach{
-      case (id, st) =>
-        val tmpv: Int = f(ccMap(st) )
-        ccMap.update(st ,tmpv)
-        if(tmpv >maxVal){
-          maxVal = tmpv
-        }
-    }
-    maxVal
+  def max2(a: (Long, Long), b: (Long, Long)): (Long, Long) = {
+    if (a._2 > b._2) a else b
   }
 
 
-
   def percolation(N: Long, T: Long, nTries: Int, sc: SparkContext, edgeRate: Int, rndm: Random, randomEdges: (scala.util.Random, Int, Int) => List[Int], writer: PrintWriter): Unit = {
-
 
     /*
     initialize N vertices; each vertex has 2 attributes: Id (Long), name(String)
@@ -65,7 +46,6 @@ object Hello  {
     GraphX doesn't explicitly allow directed edges, so make the edges undirected by
     forming two reversing edges between the two vertices.
     */
-
     var EdgeRDD: RDD[Edge[PartitionID]] = sc.parallelize(Array(Edge(0L, 0L, 1), Edge(0L, 0L, 1)))
 
     /*
@@ -78,16 +58,13 @@ object Hello  {
       Initialize the bucket with one new randomly edge. bucket size allows to set the rate of increase in size of network
       time per step
        */
-
       val newEdges = randomEdges(rndm,N.toInt,nTries)
       var v1 = newEdges(0)
       var v2 = newEdges(1)
-
       val nextEdge = ArrayBuffer(Edge(v1.toLong, v2.toLong, 1), Edge(v2.toLong, v1.toLong, 1))
       val nextEdgeRDD: RDD[Edge[PartitionID]] = sc.parallelize(nextEdge)
       var edgeBucketRDD = nextEdgeRDD
       val edgeBucket = nextEdge
-
       // Add remaining edgeRate-1 randomly generated edges to the bucket
       for (n <- 1 to edgeRate - 1) {
         val currEdges = randomEdges(rndm, N.toInt, nTries)
@@ -96,31 +73,29 @@ object Hello  {
         edgeBucket +=(Edge(v1.toLong, v2.toLong, 1), Edge(v2.toLong, v1.toLong, 1))
         edgeBucketRDD = sc.parallelize(edgeBucket)
       }
-
       // Add the bucket of edges to the collection (RDD) of existing edges;
       // i.e. update EdgeRDD with the newly formed edges
       EdgeRDD = sc.union(EdgeRDD, edgeBucketRDD)
       /*
         Make the graph
      */
-
       val graph = Graph(vRDD, EdgeRDD, "")
       /*
       collect data and get metrics
        */
       val cc = graph.connectedComponents().vertices
+//      val ccFilt = cc.filter{ case (id, st) => id != st }
       val triCounts = graph.triangleCount().vertices
       val DegreesList = graph.degrees
       val rankTris: Int = 3
       val maxTris = triCounts.collect.sortWith(_._2 > _._2).take(rankTris)
-
+      val  cw =  cc.keyBy(_._2).countByKey
+      val maxCC = cc.keyBy(_._2).countByKey.reduce(max2)
       val averageDegree = graph.numEdges/N.toDouble
-      writer.write(t+"|"+maxTris.mkString((""))+"|"+averageDegree+"\n")
-
+      writer.write(t+"|"+maxTris.mkString((""))+"|"+averageDegree+"|"+maxCC.toString+"\n")
     }
 
   }
-
 
 
   def main(args: Array[String]): Unit = {
@@ -128,12 +103,11 @@ object Hello  {
     val conf = new SparkConf().setAppName("hello-spark").setMaster("local[*]")
     val sc = new SparkContext(conf)
 
-    val T: Long = 20 // the number of events to run; the evolution time of the dynamics
+    val T: Long = 5 // the number of events to run; the evolution time of the dynamics
     val N: Long = 100 // the number of initial vertices
     val edgeRate: Int = 5 // the number of edges to add during each time step
-    val nTries: Int = 5
+    val nTries: Int = 5   // the number of times to avoid self-links; to avoid infinite while loop
     val rndm = scala.util.Random
-
     val writer = new PrintWriter("output\\log.txt")
 
     percolation(N,T,nTries,sc,edgeRate,rndm, randomEdges, writer)
