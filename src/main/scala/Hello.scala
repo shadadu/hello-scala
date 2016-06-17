@@ -12,7 +12,7 @@ object Hello  {
   def randomEdges(rndm: scala.util.Random, N: Int, nTries:Int): List[Int] = {
     /*
      Generate pair of random numbers from 0 to N-1 to pick pair of vertices to connect with an undirected edge.
-       If the two edges are already connected, pick a new pair of vertices to connect
+       If the two vertices are the same, pick a new pair of vertices to connect
      */
     var v1 = rndm.nextInt(N)
     var v2 = rndm.nextInt(N)
@@ -86,10 +86,8 @@ object Hello  {
       val cc = graph.connectedComponents().vertices
 //      val ccFilt = cc.filter{ case (id, st) => id != st }
       val triCounts = graph.triangleCount().vertices
-      val DegreesList = graph.degrees
       val rankTris: Int = 3
       val maxTris = triCounts.collect.sortWith(_._2 > _._2).take(rankTris)
-      val  cw =  cc.keyBy(_._2).countByKey
       val maxCC = cc.keyBy(_._2).countByKey.reduce(max2)
       val averageDegree = graph.numEdges/N.toDouble
       writer.write(t+"|"+maxTris.mkString((""))+"|"+averageDegree+"|"+maxCC.toString+"\n")
@@ -104,7 +102,7 @@ object Hello  {
     val sc = new SparkContext(conf)
 
     val T: Long = 5 // the number of events to run; the evolution time of the dynamics
-    val N: Long = 100 // the number of initial vertices
+    val N: Long = 100 // the number of vertices
     val edgeRate: Int = 5 // the number of edges to add during each time step
     val nTries: Int = 5   // the number of times to avoid self-links; to avoid infinite while loop
     val rndm = scala.util.Random
