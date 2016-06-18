@@ -22,15 +22,15 @@ Output Data:
 
 Performance Estimates:
 T = number of events/runs
-N = number of vertices = constant
+N = number of vertices 
 e = edge rate = constant
 G =  size of graph = t * N ( = T*N i.e., worst case) 
 
-Complexity = O(form graph) + O(collect data) =  O( T*T*N) + O(N*T) ~= (T*T)
-=> Complexity = O(T*T) 
+Worst case complexity = O(form graph) + O(collect data) =  O( T*T*N) + O(N*T) ~= (T*T*N)
+=> Complexity = O(T*T*N) 
 
 If we update the graph by only adding new edges instead of reconstructing entire graph each time, then 
-Complexity = O(T)
+Complexity = O(T*N)
             
  
 
