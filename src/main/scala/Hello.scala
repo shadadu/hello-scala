@@ -16,7 +16,7 @@ object Hello  {
      */
     var v1 = rndm.nextInt(N)
     var v2 = rndm.nextInt(N)
-    var count =0
+    var count = 0
     while (v1 == v2 && count <= nTries ) {
       v1 = rndm.nextInt(N.toInt)
       v2 = rndm.nextInt(N.toInt)
@@ -84,7 +84,6 @@ object Hello  {
       collect data and get metrics
        */
       val cc = graph.connectedComponents().vertices
-//      val ccFilt = cc.filter{ case (id, st) => id != st }
       val triCounts = graph.triangleCount().vertices
       val rankTris: Int = 3
       val maxTris = triCounts.collect.sortWith(_._2 > _._2).take(rankTris)
@@ -101,7 +100,7 @@ object Hello  {
     val conf = new SparkConf().setAppName("hello-spark").setMaster("local[*]")
     val sc = new SparkContext(conf)
 
-    val T: Long = 5 // the number of events to run; the evolution time of the dynamics
+    val T: Long = 20 // the number of events to run; the evolution time of the dynamics
     val N: Long = 100 // the number of vertices
     val edgeRate: Int = 5 // the number of edges to add during each time step
     val nTries: Int = 5   // the number of times to avoid self-links; to avoid infinite while loop

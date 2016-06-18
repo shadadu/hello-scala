@@ -19,5 +19,16 @@ Number of triangles and Size of largest connected components metrics are coded
 
 Output Data:
 (See output folder - log.txt). The code returns a time series of 3 vertices having highest number of triangles(the number of triangles is the 2nd element of the pair), and average degree, and the size of the largest component (2nd element of pair). These text data can be parsed by say, Python, and visualizations done using Matplotlib
+
+Performance Estimates:
+T = number of events/runs
+N = number of vertices = constant
+e = edge rate = constant
+G =  size of graph = t * N ( = T*N i.e., worst case) 
+Complexity = O(form graph) + O(collect data) =  O( T*T*N) + O(N*T) ~= (T*T)
+=> Complexity = O(T*T) 
+When/if we are able to update the graph by only adding new edges instead of reconstructing entire graph each time
+Complexity = O(T)
+            
  
 
