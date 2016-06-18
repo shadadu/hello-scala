@@ -27,7 +27,7 @@ e = edge rate = constant
 G =  size of graph = t * N ( = T*N i.e., worst case) 
 Complexity = O(form graph) + O(collect data) =  O( T*T*N) + O(N*T) ~= (T*T)
 => Complexity = O(T*T) 
-When/if we are able to update the graph by only adding new edges instead of reconstructing entire graph each time
+When/if we update the graph by only adding new edges instead of reconstructing entire graph each time, then 
 Complexity = O(T)
             
  
