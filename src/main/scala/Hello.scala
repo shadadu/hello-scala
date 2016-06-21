@@ -44,13 +44,13 @@ object Hello  {
     GraphX doesn't explicitly allow directed edges, so make the edges undirected by
     forming two reversing edges between the two vertices.
     */
-    var EdgeRDD: RDD[Edge[PartitionID]] = sc.parallelize(Array(Edge(0L, 0L, 1), Edge(0L, 0L, 1))).persist
+    var EdgeRDD: RDD[Edge[PartitionID]] = sc.parallelize(Array(Edge(0L, 0L, 1), Edge(0L, 0L, 1)))
 
     /*
     Run simulation of T events. During each t step, add one (undirected) edge between a randomly-selected
     pair of existing vertices
      */
-    writer.write("t|maxTris|avgDegree|maxCCsize\n")
+    writer.write("t,maxTris,avgDegree,maxCCsize\n")
 
     for (t <- 0 until T ) {
       /*
@@ -59,16 +59,16 @@ object Hello  {
       time per step
        */
       val newEdges = randomEdges(rndm,N,nTries)
-      var v1 = newEdges(0)
+      var v1 = newEdges.head
       var v2 = newEdges(1)
-      val nextEdge = ArrayBuffer(Edge(v1.toLong, v2.toLong, 1), Edge(v2.toLong, v1.toLong, 1))
+      val nextEdge: ArrayBuffer[Edge[PartitionID]] = ArrayBuffer(Edge(v1.toLong, v2.toLong, 1), Edge(v2.toLong, v1.toLong, 1))
       val nextEdgeRDD: RDD[Edge[PartitionID]] = sc.parallelize(nextEdge)
       var edgeBucketRDD = nextEdgeRDD
-      val edgeBucket = nextEdge
+      val edgeBucket: ArrayBuffer[Edge[PartitionID]] = nextEdge
       // Add remaining edgeRate-1 randomly generated edges to the bucket
       for (n <- 1 to edgeRate) {
         val currEdges = randomEdges(rndm, N, nTries)
-        v1 = currEdges(0)
+        v1 = currEdges.head
         v2 = currEdges(1)
         edgeBucket +=(Edge(v1.toLong, v2.toLong, 1), Edge(v2.toLong, v1.toLong, 1))
         edgeBucketRDD = sc.parallelize(edgeBucket)
@@ -93,10 +93,9 @@ object Hello  {
       val maxTrisSum = maxTris.map(c => c._2).sum
       val maxCC= cc.keyBy(_._2).countByKey.reduce(max2)
 
-      writer.write(t+"|"+ maxTrisSum.toString+"|"+avgDegree+"|"+maxCC._2.toString+"\n")
+      writer.write(t+","+ maxTrisSum.toString+","+avgDegree+","+maxCC._2.toString+"\n")
     }
 
-    EdgeRDD.unpersist()
 
   }
 
