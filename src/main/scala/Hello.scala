@@ -76,10 +76,6 @@ object Hello  {
       // Add the bucket of edges to the collection (RDD) of existing edges;
       // i.e. update EdgeRDD with the newly formed edges
       EdgeRDD = sc.union(EdgeRDD, edgeBucketRDD)
-      /*
-        Make the graph
-     */
-
       val graph = Graph(vRDD, EdgeRDD, "").persist()
       /*
       collect data and get metrics
@@ -89,8 +85,8 @@ object Hello  {
       val avgDegree = graph.numEdges/N.toDouble
       graph.unpersist()
       val rankTris: Int = 3
-      val maxTris = triCounts.collect.sortWith(_._2 > _._2).take(rankTris)
-      val maxTrisSum = maxTris.map(c => c._2).sum
+      val maxTris = triCounts.sortBy(c => c._2).take(rankTris)
+      val maxTrisSum = maxTris.map(c => c._2).sum/rankTris.toDouble
       val maxCC= cc.keyBy(_._2).countByKey.reduce(max2)
 
       writer.write(t+","+ maxTrisSum.toString+","+avgDegree+","+maxCC._2.toString+"\n")
@@ -105,7 +101,7 @@ object Hello  {
     val conf = new SparkConf().setAppName("hello-spark").setMaster("local[*]")
     val sc = new SparkContext(conf)
 
-    val T: Int = 100 // the number of events to run; the evolution time of the dynamics
+    val T: Int = 50 // the number of events to run; the evolution time of the dynamics
     val N: Int = 100 // the number of vertices
     val edgeRate: Int = 5 // the number of edges to add during each time step
     val nTries: Int = 5   // the number of times to avoid self-links; to avoid infinite while loop
