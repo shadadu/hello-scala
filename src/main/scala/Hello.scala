@@ -80,18 +80,17 @@ object Hello  {
       /*
       collect data and get metrics
        */
-      val cc = graph.connectedComponents().vertices
-      val triCounts = graph.triangleCount().vertices
+      val cc = graph.connectedComponents().vertices.cache
+      val triCounts = graph.triangleCount().vertices.cache
       val avgDegree = graph.numEdges/N.toDouble
       graph.unpersist()
       val rankTris: Int = 3
-      val maxTris = triCounts.sortBy(c => c._2).take(rankTris)
-      val maxTrisSum = maxTris.map(c => c._2).sum/rankTris.toDouble
-      val maxCC= cc.keyBy(_._2).countByKey.reduce(max2)
-
-      writer.write(t+","+ maxTrisSum.toString+","+avgDegree+","+maxCC._2.toString+"\n")
+      val maxTris = triCounts.map(c => c._2).max
+      triCounts.unpersist()
+      val maxCC = cc.keyBy(_._2).countByKey.reduce(max2)
+      cc.unpersist()
+      writer.write(t+","+ maxTris.toString+","+avgDegree+","+maxCC._2.toString+"\n")
     }
-
 
   }
 
