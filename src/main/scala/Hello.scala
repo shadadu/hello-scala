@@ -1,17 +1,11 @@
 import java.io.{FileNotFoundException, IOException, PrintWriter}
-
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import org.apache.spark.{SparkConf, SparkContext}
-
 import scala.util.Random
-
-
-
 
 
 object Hello  {
@@ -30,6 +24,23 @@ object Hello  {
       count+=1
     }
     List(v1,v2)
+  }
+
+  def randomEdgesFnl(rndm: scala.util.Random, N: Int, nTries: Int): List[Int] = {
+    // Generate random numbe pair :- functional version
+    val x = List.fill(nTries+1)(N)
+    def ifxn(x: List[Int]): List[Int]={
+      val u1 = rndm.nextInt(x.head)
+      val u2 = rndm.nextInt(x.head)
+      val fxn: () => List[Int] = () => List(u1, u2)
+      if(u1 != u2 || x.length == 1){
+        fxn()
+      }
+      else{
+        ifxn(x drop 1)
+      }
+    }
+    ifxn(x)
   }
 
 
@@ -98,19 +109,20 @@ object Hello  {
       Initialize the bucket with one new randomly edge. bucket size allows to set the rate of increase in size of network
       time per step
        */
+//      val newEdges = randomEdges(rndm,N,nTries)
       val newEdges = randomEdges(rndm,N,nTries)
-      var v1 = newEdges.head
-      var v2 = newEdges(1)
+      val v1 = newEdges.head
+      val v2 = newEdges(1)
       val nextEdge: ArrayBuffer[Edge[PartitionID]] = ArrayBuffer(Edge(v1.toLong, v2.toLong, 1), Edge(v2.toLong, v1.toLong, 1))
       val nextEdgeRDD: RDD[Edge[PartitionID]] = sc.parallelize(nextEdge)
       var edgeBucketRDD = nextEdgeRDD
       val edgeBucket: ArrayBuffer[Edge[PartitionID]] = nextEdge
       // Add remaining edgeRate-1 randomly generated edges to the bucket
       for (n <- 1 to edgeRate) {
-        val currEdges = randomEdges(rndm, N, nTries)
-        v1 = currEdges.head
-        v2 = currEdges(1)
-        edgeBucket +=(Edge(v1.toLong, v2.toLong, 1), Edge(v2.toLong, v1.toLong, 1))
+        val currEdges = randomEdgesFnl(rndm, N, nTries)
+        val v11 = currEdges.head
+        val v22 = currEdges(1)
+        edgeBucket +=(Edge(v11.toLong, v22.toLong, 1), Edge(v22.toLong, v11.toLong, 1))
         edgeBucketRDD = sc.parallelize(edgeBucket)
       }
       // Add the bucket of edges to the collection (RDD) of existing edges;
@@ -146,18 +158,18 @@ object Hello  {
     val edgeRate: Int = 5 // the number of edges to add during each time step
     val nTries: Int = 5   // the number of times to avoid self-links; to avoid infinite while loop
     val rndm = scala.util.Random
-    val logWriter = new PrintWriter("output\\log.txt")
-//    val writer = new PrintWriter("output\\outputData.csv")
+//    val logWriter = new PrintWriter("output\\log.txt")
+    val writer = new PrintWriter("output\\outputData.csv")
 
 
-//    percolation(N,T,nTries,sc,edgeRate,rndm, randomEdges, writer)
+    percolation(N,T,nTries,sc,edgeRate,rndm, randomEdges, writer)
 
-//    writer.close()
+    writer.close()
 
-    val writerResults = new PrintWriter("output\\resultsData.csv")
-    results(sc, sqlContext, logWriter, writerResults)
-    writerResults.close()
-    logWriter.close()
+//    val writerResults = new PrintWriter("output\\resultsData.csv")
+//    results(sc, sqlContext, logWriter, writerResults)
+//    writerResults.close()
+//    logWriter.close()
 
     sc.stop()
   }
