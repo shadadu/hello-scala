@@ -1,9 +1,16 @@
-import java.io.PrintWriter
+import java.io.{FileNotFoundException, IOException, PrintWriter}
+
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import org.apache.spark.{SparkConf, SparkContext}
+
 import scala.util.Random
+
+
 
 
 
@@ -25,7 +32,40 @@ object Hello  {
     List(v1,v2)
   }
 
+
   def max2(a: (Long, Long), b: (Long, Long)): (Long, Long) = if (a._2 > b._2) a else b
+
+  def results(sc: SparkContext, sqlContext: SQLContext, logWriter: PrintWriter, writerResults: PrintWriter): Unit ={
+
+    def inFunc(logWriter: PrintWriter): RDD[String] = {
+        try {
+          val metrix = sc.textFile ("output\\outputData.csv")
+          logWriter.write ("outputData.csv loaded\n")
+          val metrixfunc: () => RDD[String] = () => metrix
+          metrixfunc()
+        } catch {
+          case ex: FileNotFoundException => {
+            logWriter.write("Missing file exception")
+            logWriter.close()
+            null
+          }
+          case ex: IOException => {
+            logWriter.write("IO Exception")
+            logWriter.close()
+            null
+          }
+        }
+    }
+    val getMetrix = inFunc(logWriter)
+    val schemaString = "t tri avgdeg mcc"
+    val schema =
+      StructType(
+        schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
+    val rowRDD = getMetrix.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3)))
+    val df =  sqlContext.createDataFrame(rowRDD, schema)
+    df.show()
+
+  }
 
 
   def percolation(N: Int, T: Int, nTries: Int, sc: SparkContext, edgeRate: Int, rndm: Random, randomEdges: (scala.util.Random, Int, Int) => List[Int], writer: PrintWriter): Unit = {
@@ -99,17 +139,25 @@ object Hello  {
 
     val conf = new SparkConf().setAppName("hello-spark").setMaster("local[*]")
     val sc = new SparkContext(conf)
+    val sqlContext = new SQLContext(sc)
 
-    val T: Int = 50 // the number of events to run; the evolution time of the dynamics
+    val T: Int = 10 // the number of events to run; the evolution time of the dynamics
     val N: Int = 100 // the number of vertices
     val edgeRate: Int = 5 // the number of edges to add during each time step
     val nTries: Int = 5   // the number of times to avoid self-links; to avoid infinite while loop
     val rndm = scala.util.Random
-    val writer = new PrintWriter("output\\outputData.csv")
+    val logWriter = new PrintWriter("output\\log.txt")
+//    val writer = new PrintWriter("output\\outputData.csv")
 
-    percolation(N,T,nTries,sc,edgeRate,rndm, randomEdges, writer)
 
-    writer.close()
+//    percolation(N,T,nTries,sc,edgeRate,rndm, randomEdges, writer)
+
+//    writer.close()
+
+    val writerResults = new PrintWriter("output\\resultsData.csv")
+    results(sc, sqlContext, logWriter, writerResults)
+    writerResults.close()
+    logWriter.close()
 
     sc.stop()
   }
