@@ -27,7 +27,7 @@ object Hello  {
   }
 
   def randomEdgesFnl(rndm: scala.util.Random, N: Int, nTries: Int): List[Int] = {
-    // Generate random numbe pair :- functional version
+    // Generate random number pair :- functional version
     val x = List.fill(nTries+1)(N)
     def ifxn(x: List[Int]): List[Int]={
       val u1 = rndm.nextInt(x.head)
@@ -74,6 +74,9 @@ object Hello  {
         schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
     val rowRDD = getMetrix.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3)))
     val df =  sqlContext.createDataFrame(rowRDD, schema)
+    df.registerTempTable("resultsTable")
+
+
     df.show()
 
   }
@@ -101,7 +104,7 @@ object Hello  {
     Run simulation of T events. During each t step, add one (undirected) edge between a randomly-selected
     pair of existing vertices
      */
-    writer.write("t,maxTris,avgDegree,maxCCsize\n")
+//    writer.write("t,maxTris,avgDegree,maxCCsize\n")
 
     for (t <- 0 until T ) {
       /*
@@ -114,8 +117,6 @@ object Hello  {
       val v1 = newEdges.head
       val v2 = newEdges(1)
       val nextEdge: ArrayBuffer[Edge[PartitionID]] = ArrayBuffer(Edge(v1.toLong, v2.toLong, 1), Edge(v2.toLong, v1.toLong, 1))
-      val nextEdgeRDD: RDD[Edge[PartitionID]] = sc.parallelize(nextEdge)
-      var edgeBucketRDD = nextEdgeRDD
       val edgeBucket: ArrayBuffer[Edge[PartitionID]] = nextEdge
       // Add remaining edgeRate-1 randomly generated edges to the bucket
       for (n <- 1 to edgeRate) {
@@ -123,10 +124,9 @@ object Hello  {
         val v11 = currEdges.head
         val v22 = currEdges(1)
         edgeBucket +=(Edge(v11.toLong, v22.toLong, 1), Edge(v22.toLong, v11.toLong, 1))
-        edgeBucketRDD = sc.parallelize(edgeBucket)
       }
-      // Add the bucket of edges to the collection (RDD) of existing edges;
-      // i.e. update EdgeRDD with the newly formed edges
+      val edgeBucketRDD = sc.parallelize(edgeBucket)
+      // Add the bucket of edges to the collection (RDD) of existing edges
       EdgeRDD = sc.union(EdgeRDD, edgeBucketRDD)
       val graph = Graph(vRDD, EdgeRDD, "").persist()
       /*
@@ -136,7 +136,6 @@ object Hello  {
       val triCounts = graph.triangleCount().vertices.cache
       val avgDegree = graph.numEdges/N.toDouble
       graph.unpersist()
-      val rankTris: Int = 3
       val maxTris = triCounts.map(c => c._2).max
       triCounts.unpersist()
       val maxCC = cc.keyBy(_._2).countByKey.reduce(max2)
@@ -153,23 +152,21 @@ object Hello  {
     val sc = new SparkContext(conf)
     val sqlContext = new SQLContext(sc)
 
-    val T: Int = 10 // the number of events to run; the evolution time of the dynamics
+    val T: Int = 30 // the number of events to run; the evolution time of the dynamics
     val N: Int = 100 // the number of vertices
     val edgeRate: Int = 5 // the number of edges to add during each time step
     val nTries: Int = 5   // the number of times to avoid self-links; to avoid infinite while loop
     val rndm = scala.util.Random
-//    val logWriter = new PrintWriter("output\\log.txt")
+    val logWriter = new PrintWriter("output\\log.txt")
     val writer = new PrintWriter("output\\outputData.csv")
 
-
     percolation(N,T,nTries,sc,edgeRate,rndm, randomEdges, writer)
-
     writer.close()
 
-//    val writerResults = new PrintWriter("output\\resultsData.csv")
-//    results(sc, sqlContext, logWriter, writerResults)
-//    writerResults.close()
-//    logWriter.close()
+    val writerResults = new PrintWriter("output\\resultsData.csv")
+    results(sc, sqlContext, logWriter, writerResults)
+    writerResults.close()
+    logWriter.close()
 
     sc.stop()
   }
